@@ -28,7 +28,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
-import android.graphics.PixelFormat;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
@@ -1235,11 +1234,6 @@ public class InCallScreen extends Activity
 
         // Have the WindowManager filter out touch events that are "too fat".
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_IGNORE_CHEEK_PRESSES);
-
-        // Run in a 32-bit window, which improves the appearance of some
-        // semitransparent artwork in the in-call UI (like the CallCard
-        // photo borders).
-        getWindow().setFormat(PixelFormat.RGBX_8888);
 
         mMainFrame = (ViewGroup) findViewById(R.id.mainFrame);
         mInCallPanel = (ViewGroup) findViewById(R.id.inCallPanel);
