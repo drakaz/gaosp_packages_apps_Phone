@@ -1202,6 +1202,12 @@ public class PhoneApp extends Application implements AccelerometerListener.Orien
     /* package */ void updateProximitySensorMode(Phone.State state) {
         if (VDBG) Log.d(LOG_TAG, "updateProximitySensorMode: state = " + state);
 
+	ContentResolver resolver = this.getContentResolver();
+	boolean IsSettingSensorEnabledTest = android.provider.Settings.System.getInt(resolver,
+                android.provider.Settings.System.THROTTLE_PROXIMITY_SENSOR, 1) == 1;
+
+        Log.d(LOG_TAG, "  issensor : " + IsSettingSensorEnabledTest);
+
         if (proximitySensorModeEnabled()) {
             synchronized (mProximityWakeLock) {
                 // turn proximity sensor off and turn screen on immediately if
@@ -1286,8 +1292,18 @@ public class PhoneApp extends Application implements AccelerometerListener.Orien
      * @return true if this device supports the "proximity sensor
      * auto-lock" feature while in-call (see updateProximitySensorMode()).
      */
+    // drakaz : check if sensor is enable or not
     /* package */ boolean proximitySensorModeEnabled() {
-        return (mProximityWakeLock != null);
+
+        ContentResolver resolver = this.getContentResolver();
+        boolean IsSettingSensorEnabled = android.provider.Settings.System.getInt(resolver,
+                android.provider.Settings.System.THROTTLE_PROXIMITY_SENSOR, 1) == 1;
+
+	if (IsSettingSensorEnabled == true) {
+        	return (mProximityWakeLock != null);
+	} else {
+		return false;
+	}
     }
 
     KeyguardManager getKeyguardManager() {
