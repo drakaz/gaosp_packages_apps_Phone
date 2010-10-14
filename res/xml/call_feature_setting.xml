@@ -64,6 +64,24 @@
       </PreferenceScreen>
   </PreferenceCategory>
 
+<!-- drakaz : smsc number -->
+<PreferenceCategory android:key="pref_smsc_setting" android:title="@string/smsc_setting">
+     <PreferenceScreen android:key="button_smsc_key"
+            android:title="@string/smsc_number_label"
+	    android:summary="@string/smsc_number_summary"
+            android:persistent="false">
+	
+              <com.android.phone.EditPhoneNumberPreference
+                android:key="button_smsc_edit_key"
+                android:title="@string/smsc_number_label"
+                android:persistent="false"
+                android:dialogTitle="@string/smsc_number_label"
+                phone:confirmMode="confirm"
+                android:singleLine="true"
+                android:autoText="false" />
+     </PreferenceScreen>
+</PreferenceCategory>
+
 <!--  Created and modified by cytown@gmail.com for modified Phone app usage -->
 <PreferenceCategory android:key="pref_advanced_settings" android:title="@string/advanced_setting">
     <CheckBoxPreference
