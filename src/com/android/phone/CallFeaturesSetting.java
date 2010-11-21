@@ -2288,7 +2288,6 @@ protected void onStop() {
     outState.putBoolean(BUTTON_FORCE_TOUCH, mButtonForceTouch == null || mButtonForceTouch.isChecked());
     outState.commit();
     init(pref);
-    Settings.System.putString(mPhone.getContext().getContentResolver(), Settings.System.MY_SMSC_NUMBER, mSubMenuSMSCNumberSettings.getPhoneNumber());
     super.onStop();
 }
 
