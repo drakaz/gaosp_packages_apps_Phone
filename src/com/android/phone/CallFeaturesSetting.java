@@ -38,6 +38,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.preference.CheckBoxPreference;
+import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -78,7 +79,7 @@ public class CallFeaturesSetting extends PreferenceActivity
         implements DialogInterface.OnClickListener,
         Preference.OnPreferenceChangeListener,
         EditPhoneNumberPreference.OnDialogClosedListener,
-        EditPhoneNumberPreference.GetDefaultNumberListener{
+        EditPhoneNumberPreference.GetDefaultNumberListener {
 
     // intent action to bring up voice mail settings
     public static final String ACTION_ADD_VOICEMAIL =
@@ -147,6 +148,9 @@ public class CallFeaturesSetting extends PreferenceActivity
     private static final String BUTTON_GSM_UMTS_OPTIONS = "button_gsm_more_expand_key";
     private static final String BUTTON_CDMA_OPTIONS = "button_cdma_more_expand_key";
 
+    private static final String BUTTON_SMSC_SETTING_KEY = "button_smsc_setting_key";
+    private static final String BUTTON_SMSC_PREF_KEY = "button_smsc_edit_key";
+
     private static final String VM_NUMBERS_SHARED_PREFERENCES_NAME = "vm_numbers";
 
     private static final String BUTTON_SIP_CALL_OPTIONS =
@@ -178,6 +182,9 @@ public class CallFeaturesSetting extends PreferenceActivity
     /** Handle to voicemail pref */
     private static final int VOICEMAIL_PREF_ID = 1;
     private static final int VOICEMAIL_PROVIDER_CFG_ID = 2;
+    
+    /** Handle to smsc pref */
+    private static final int SMSC_PREF_ID = 999;
 
     private Phone mPhone;
 
@@ -217,6 +224,8 @@ public class CallFeaturesSetting extends PreferenceActivity
     private ListPreference mVoicemailProviders;
     private PreferenceScreen mVoicemailSettings;
     private SipSharedPreferences mSipSharedPreferences;
+    private PreferenceScreen mSMSCNumberSettings;
+    private EditPhoneNumberPreference mSubMenuSMSCNumberSettings;
 
     private class VoiceMailProvider {
         public VoiceMailProvider(String name, Intent intent) {
@@ -491,6 +500,8 @@ public class CallFeaturesSetting extends PreferenceActivity
     public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preference preference) {
         if (preference == mSubMenuVoicemailSettings) {
             return true;
+        } else if (preference == mSubMenuSMSCNumberSettings) {
+                return true;
         } else if (preference == mButtonDTMF) {
             return true;
         } else if (preference == mButtonTTY) {
@@ -514,6 +525,10 @@ public class CallFeaturesSetting extends PreferenceActivity
         } else if (preference == mVoicemailSettings && preference.getIntent() != null) {
             if (DBG) log("Invoking cfg intent " + preference.getIntent().getPackage());
             this.startActivityForResult(preference.getIntent(), VOICEMAIL_PROVIDER_CFG_ID);
+            return true;
+        } else if (preference == mSMSCNumberSettings && preference.getIntent() != null) {
+            if (DBG) log("Invoking cfg intent " + preference.getIntent().getPackage());
+            this.startActivityForResult(preference.getIntent(), SMSC_PREF_ID);
             return true;
         }
         return false;
@@ -608,6 +623,21 @@ public class CallFeaturesSetting extends PreferenceActivity
                         initPrefBlackList();
                     epn.setPhoneNumber("");
                 }
+            } else if (epn == mSubMenuSMSCNumberSettings) {
+            	if (epn.getPhoneNumber() != "") {
+            		mSubMenuSMSCNumberSettings.setSummary(epn.getPhoneNumber());
+            	} else {
+            		mSubMenuSMSCNumberSettings.setSummary("default");
+            	}
+            	Settings.System.putString(mPhone.getContext().getContentResolver(), Settings.System.MY_SMSC_NUMBER, epn.getPhoneNumber());
+            	 	
+// add by cytown
+} else if (epn == mButtonAddBlack) {
+    String number = PhoneNumberUtils.stripSeparators((epn.getPhoneNumber()));
+    if (number != null && !number.equals("")) {
+        if (addBlackList(number)) initPrefBlackList();
+        epn.setPhoneNumber("");
+    }
             }
         }
     }
@@ -629,6 +659,23 @@ public class CallFeaturesSetting extends PreferenceActivity
         if (preference == mButtonAddBlack) {
             // add by cytown
             return null;
+        } else if (preference == mSubMenuSMSCNumberSettings) {
+        	String mCurrentNumber = Settings.System.getString(mPhone.getContext().getContentResolver(), Settings.System.MY_SMSC_NUMBER);
+        	if (mCurrentNumber == null) {
+        		mCurrentNumber = "default";
+        		mSubMenuSMSCNumberSettings.setSummary(mCurrentNumber);
+        	} else if (mCurrentNumber.contentEquals("")) {
+        		mCurrentNumber = "default";
+        		mSubMenuSMSCNumberSettings.setSummary(mCurrentNumber);
+        	} else {
+        		mSubMenuSMSCNumberSettings.setPhoneNumber(mCurrentNumber);
+        		mSubMenuSMSCNumberSettings.setSummary(mCurrentNumber);
+        	}	
+        	return null;
+
+        	// add by cytown
+} else if (preference == mButtonAddBlack) {
+    return null;
         }
 
         String vmDisplay = mPhone.getVoiceMailNumber();
@@ -641,7 +688,8 @@ public class CallFeaturesSetting extends PreferenceActivity
         // Return the voicemail number prepended with "VM: "
         if (DBG) log("updating default for call forwarding dialogs");
         return getString(R.string.voicemail_abbreviated) + " " + vmDisplay;
-    }
+        }
+        
 
 
     // override the startsubactivity call to make changes in state consistent.
@@ -1474,6 +1522,7 @@ public class CallFeaturesSetting extends PreferenceActivity
         // get buttons
         PreferenceScreen prefSet = getPreferenceScreen();
         mSubMenuVoicemailSettings = (EditPhoneNumberPreference)findPreference(BUTTON_VOICEMAIL_KEY);
+        mSubMenuSMSCNumberSettings = (EditPhoneNumberPreference)findPreference(BUTTON_SMSC_PREF_KEY);
         if (mSubMenuVoicemailSettings != null) {
             mSubMenuVoicemailSettings.setParentActivity(this, VOICEMAIL_PREF_ID, this);
             mSubMenuVoicemailSettings.setDialogOnClosedListener(this);
@@ -1486,6 +1535,7 @@ public class CallFeaturesSetting extends PreferenceActivity
         mButtonHAC = (CheckBoxPreference) findPreference(BUTTON_HAC_KEY);
         mButtonTTY = (ListPreference) findPreference(BUTTON_TTY_KEY);
         mVoicemailProviders = (ListPreference) findPreference(BUTTON_VOICEMAIL_PROVIDER_KEY);
+        
         if (mVoicemailProviders != null) {
             mVoicemailProviders.setOnPreferenceChangeListener(this);
             mVoicemailSettings = (PreferenceScreen)findPreference(BUTTON_VOICEMAIL_SETTING_KEY);
@@ -1538,6 +1588,21 @@ public class CallFeaturesSetting extends PreferenceActivity
                 mButtonTTY = null;
             }
         }
+
+        if (mSubMenuSMSCNumberSettings != null) {
+        	mSubMenuSMSCNumberSettings.setParentActivity(this, SMSC_PREF_ID, this);
+        	mSubMenuSMSCNumberSettings.setDialogOnClosedListener(this);
+        	mSubMenuSMSCNumberSettings.setDialogTitle(R.string.smsc_number_label);
+        	String mCurrentNumber = Settings.System.getString(mPhone.getContext().getContentResolver(), Settings.System.MY_SMSC_NUMBER);
+        	if (mCurrentNumber == null) {
+        		mSubMenuSMSCNumberSettings.setSummary("default");
+        	} else if (mCurrentNumber.contentEquals("")) {
+        		mSubMenuSMSCNumberSettings.setSummary("default");
+        	} else {
+        		mSubMenuSMSCNumberSettings.setSummary(mCurrentNumber);
+        	}
+        }
+
 
         if (!getResources().getBoolean(R.bool.world_phone)) {
             Preference options = prefSet.findPreference(BUTTON_CDMA_OPTIONS);
@@ -1724,6 +1789,15 @@ public class CallFeaturesSetting extends PreferenceActivity
                     Phone.TTY_MODE_OFF);
             mButtonTTY.setValue(Integer.toString(settingsTtyMode));
             updatePreferredTtyModeSummary(settingsTtyMode);
+        }
+	if (mSMSCNumberSettings != null) {
+			String mCurrentSMSCNumber = Settings.System.getString(getContentResolver(), "MY_SMSC_NUMBER");
+			if (mCurrentSMSCNumber == null) {
+				mCurrentSMSCNumber = "default";
+			} else if (mCurrentSMSCNumber == "") {
+				mCurrentSMSCNumber = "default";	
+			}
+			mSubMenuSMSCNumberSettings.setSummary(mCurrentSMSCNumber);
         }
     }
 
@@ -2194,6 +2268,29 @@ public class CallFeaturesSetting extends PreferenceActivity
     static class PhoneNo implements Comparable<PhoneNo>, java.io.Externalizable,
             java.io.Serializable {
         static final long serialVersionUID = 32847013274L;
+@Override
+protected void onStop() {
+
+    //System.out.println("save please!");
+    SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+    Editor outState = pref.edit();
+    outState.putBoolean(BUTTON_VIBRATE_OUTGOING, mButtonVibOutgoing.isChecked());
+    outState.putBoolean(BUTTON_VIBRATE_45, mButtonVib45.isChecked());
+    outState.putBoolean(BUTTON_VIBRATE_HANGUP, mButtonVibHangup.isChecked());
+    outState.putBoolean(BUTTON_SCREEN_AWAKE, mButtonScreenAwake.isChecked());
+    outState.putBoolean(BUTTON_ALWAYS_PROXIMITY, mButtonAlwaysProximity.isChecked());
+    outState.putBoolean(BUTTON_RETURN_HOME, mButtonReturnHome.isChecked());
+    outState.putBoolean(BUTTON_LED_NOTIFY, mButtonLedNotify.isChecked());
+    outState.putBoolean(BUTTON_SHOW_ORGAN, mButtonShowOrgan.isChecked());
+    outState.putBoolean(BUTTON_TURN_SILENCE, mButtonTurnSilence.isChecked());
+    outState.putBoolean(BUTTON_LEFT_HAND, mButtonLeftHand.isChecked());
+    outState.putBoolean(BUTTON_VIBRATE_CALL_WAITING, mButtonVibCallWaiting.isChecked());
+    outState.putBoolean(BUTTON_FORCE_TOUCH, mButtonForceTouch == null || mButtonForceTouch.isChecked());
+    outState.commit();
+    init(pref);
+    Settings.System.putString(mPhone.getContext().getContentResolver(), Settings.System.MY_SMSC_NUMBER, mSubMenuSMSCNumberSettings.getPhoneNumber());
+    super.onStop();
+}
 
         String phone;
 

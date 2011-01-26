@@ -1501,4 +1501,7 @@
        <item>Tap to Hang up</item>
        <item>Double Tap to Hang up</item>    
     </string-array> 
+    <string name="smsc_setting">SMS/MMS</string>
+    <string name="smsc_number_label">SMS Center</string>
+    <string name="smsc_number_summary">Set the SMS Center number for this device</string>
 </resources>
