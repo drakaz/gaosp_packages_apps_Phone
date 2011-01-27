@@ -2268,28 +2268,6 @@ public class CallFeaturesSetting extends PreferenceActivity
     static class PhoneNo implements Comparable<PhoneNo>, java.io.Externalizable,
             java.io.Serializable {
         static final long serialVersionUID = 32847013274L;
-@Override
-protected void onStop() {
-
-    //System.out.println("save please!");
-    SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-    Editor outState = pref.edit();
-    outState.putBoolean(BUTTON_VIBRATE_OUTGOING, mButtonVibOutgoing.isChecked());
-    outState.putBoolean(BUTTON_VIBRATE_45, mButtonVib45.isChecked());
-    outState.putBoolean(BUTTON_VIBRATE_HANGUP, mButtonVibHangup.isChecked());
-    outState.putBoolean(BUTTON_SCREEN_AWAKE, mButtonScreenAwake.isChecked());
-    outState.putBoolean(BUTTON_ALWAYS_PROXIMITY, mButtonAlwaysProximity.isChecked());
-    outState.putBoolean(BUTTON_RETURN_HOME, mButtonReturnHome.isChecked());
-    outState.putBoolean(BUTTON_LED_NOTIFY, mButtonLedNotify.isChecked());
-    outState.putBoolean(BUTTON_SHOW_ORGAN, mButtonShowOrgan.isChecked());
-    outState.putBoolean(BUTTON_TURN_SILENCE, mButtonTurnSilence.isChecked());
-    outState.putBoolean(BUTTON_LEFT_HAND, mButtonLeftHand.isChecked());
-    outState.putBoolean(BUTTON_VIBRATE_CALL_WAITING, mButtonVibCallWaiting.isChecked());
-    outState.putBoolean(BUTTON_FORCE_TOUCH, mButtonForceTouch == null || mButtonForceTouch.isChecked());
-    outState.commit();
-    init(pref);
-    super.onStop();
-}
 
         String phone;
 
