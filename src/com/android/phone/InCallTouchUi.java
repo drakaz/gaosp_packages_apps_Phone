@@ -100,11 +100,16 @@ public class InCallTouchUi extends FrameLayout
 
     private CallFeaturesSetting mSettings;
 
-        // Look up the various UI elements.
+    // Look up the various UI elements.
     private int mLockscreenStyle = (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.LOCKSCREEN_STYLE_PREF, 1));
+                Settings.System.LOCKSCREEN_STYLE_PREF, 3));
+
+    private boolean mRotaryHideArrows = (Settings.System.getInt(mContext.getContentResolver(),
+            Settings.System.LOCKSCREEN_ROTARY_HIDE_ARROWS, 0) == 1);
 
     private boolean mUseRotaryLockscreen = (mLockscreenStyle == 2);
+    private boolean mUseLenseSquareLockscreen = (mLockscreenStyle == 4);
+    private boolean mUseRotaryRevLockscreen = (mUseLenseSquareLockscreen ? true : (mLockscreenStyle == 3));
 
     public InCallTouchUi(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -151,6 +156,8 @@ public class InCallTouchUi extends FrameLayout
             mIncomingRotarySelectorCallWidget.setLeftHandleResource(R.drawable.ic_jog_dial_answer);
             mIncomingRotarySelectorCallWidget.setRightHandleResource(R.drawable.ic_jog_dial_decline);
             mIncomingRotarySelectorCallWidget.setOnDialTriggerListener(this);
+            mIncomingRotarySelectorCallWidget.setRevamped(mUseRotaryRevLockscreen);
+            mIncomingRotarySelectorCallWidget.hideArrows(mRotaryHideArrows);
 
         // "slide-to-answer" widget for incoming calls.
             mIncomingSlidingTabCallWidget = (SlidingTab) findViewById(R.id.incomingSlidingTabCallWidget);
@@ -683,12 +690,12 @@ public class InCallTouchUi extends FrameLayout
      * Apply an animation to hide the incoming call widget.
      */
     private void hideIncomingCallWidget() {
-        if (mUseRotaryLockscreen) {
+        if (mUseRotaryLockscreen || mUseRotaryRevLockscreen) {
             if (mIncomingRotarySelectorCallWidget.getVisibility() != View.VISIBLE
                 || mIncomingRotarySelectorCallWidget.getAnimation() != null) {
                 // Widget is already hidden or in the process of being hidden
                 return;
-            } 
+            }
         } else {
             if (mIncomingSlidingTabCallWidget.getVisibility() != View.VISIBLE
                 || mIncomingSlidingTabCallWidget.getAnimation() != null) {
@@ -710,7 +717,7 @@ public class InCallTouchUi extends FrameLayout
 
             public void onAnimationEnd(Animation animation) {
                 // hide the incoming call UI.
-                if (mUseRotaryLockscreen) {
+                if (mUseRotaryLockscreen || mUseRotaryRevLockscreen) {
                     mIncomingRotarySelectorCallWidget.clearAnimation();
                     mIncomingRotarySelectorCallWidget.setVisibility(View.GONE);
                 } else {
@@ -719,7 +726,7 @@ public class InCallTouchUi extends FrameLayout
                 }
             }
         });
-        if (mUseRotaryLockscreen) {
+        if (mUseRotaryLockscreen || mUseRotaryRevLockscreen) {
             mIncomingRotarySelectorCallWidget.startAnimation(anim);
         } else {
             mIncomingSlidingTabCallWidget.startAnimation(anim);
@@ -733,19 +740,62 @@ public class InCallTouchUi extends FrameLayout
         // Look up the various UI elements.
         // This needs to be called every Incoming Call to recheck settings
         mLockscreenStyle = (Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.LOCKSCREEN_STYLE_PREF, 1));
+                Settings.System.LOCKSCREEN_STYLE_PREF, 3));
+        mRotaryHideArrows = (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.LOCKSCREEN_ROTARY_HIDE_ARROWS, 0) == 1);
+
         mUseRotaryLockscreen = (mLockscreenStyle == 2);
+        mUseLenseSquareLockscreen = (mLockscreenStyle == 4);
+        mUseRotaryRevLockscreen = (mUseLenseSquareLockscreen ? true : (mLockscreenStyle == 3));
+        mIncomingRotarySelectorCallWidget.setRotary(mUseRotaryLockscreen);
+        mIncomingRotarySelectorCallWidget.setRevamped(mUseRotaryRevLockscreen);
+        mIncomingRotarySelectorCallWidget.hideArrows(mRotaryHideArrows);
+        mIncomingRotarySelectorCallWidget.setVisibility((mUseRotaryLockscreen || mUseRotaryRevLockscreen) ? View.VISIBLE : View.GONE);
+        mIncomingSlidingTabCallWidget.setVisibility((mUseRotaryLockscreen || mUseRotaryRevLockscreen) ? View.GONE : View.VISIBLE);
+
+
+// tolemaC & Superatmel begin
+        // Hide the incoming call screen with a transition
+        AlphaAnimation animAlpha = new AlphaAnimation(0.0f, 1.0f);
+        animAlpha.setDuration(IN_CALL_WIDGET_TRANSITION_TIME);
+        animAlpha.setAnimationListener(new AnimationListener() {
+
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+
+            public void onAnimationEnd(Animation animation) {
+                // hide the incoming call UI.
+                if (mUseRotaryLockscreen || mUseRotaryRevLockscreen) {
+                    mIncomingRotarySelectorCallWidget.clearAnimation();
+                    mIncomingRotarySelectorCallWidget.setVisibility(View.VISIBLE);
+                } else {
+                    mIncomingSlidingTabCallWidget.clearAnimation();
+                    mIncomingSlidingTabCallWidget.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+        if (mUseRotaryLockscreen || mUseRotaryRevLockscreen) {
+            mIncomingRotarySelectorCallWidget.startAnimation(animAlpha);
+        } else {
+            mIncomingSlidingTabCallWidget.startAnimation(animAlpha);
+        }
+// tolemaC & Superatmel end
 
             Animation anim = mIncomingRotarySelectorCallWidget.getAnimation();
             if (anim != null) {
                 anim.reset();
-                if (mUseRotaryLockscreen) {
+                if (mUseRotaryLockscreen || mUseRotaryRevLockscreen) {
                     mIncomingRotarySelectorCallWidget.clearAnimation();
                 } else {
                     mIncomingSlidingTabCallWidget.clearAnimation();
                 }
             }
-            if (mUseRotaryLockscreen) {
+            if (mUseRotaryLockscreen || mUseRotaryRevLockscreen) {
                 //Rotary Widget has no public reset function
                 //mIncomingRotarySelectorCallWidget.reset();
                 mIncomingRotarySelectorCallWidget.setVisibility(View.VISIBLE);
@@ -767,7 +817,7 @@ public class InCallTouchUi extends FrameLayout
             // since *this* class is the only place that knows that the left
             // handle means "Answer" and the right handle means "Decline".)
             int hintTextResId, hintColorResId;
-            if (mUseRotaryLockscreen) {
+            if (mUseRotaryLockscreen || mUseRotaryRevLockscreen) {
                 switch (grabbedState) {
                     case RotarySelector.NOTHING_GRABBED:
                         hintTextResId = 0;
